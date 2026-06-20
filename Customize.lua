@@ -24,9 +24,10 @@ Customize.CaptureAllTextures = false        -- true = all textures, false = text
 Customize.BatchSize         = 10
 Customize.BatchPauseWait    = 2000          -- ms
 Customize.GCInterval        = 20
-Customize.LatentRate        = 8000000       -- bytes/sec for capture upload (latent event throttle).
-                                            -- 8 MB/s is plenty for 512x512; raise for 4K source frames
-                                            -- (e.g. 16000000 = 16 MB/s) if uploads bottleneck the queue.
+Customize.PipelineDepth     = 3             -- max in-flight captures (1 = wait for each, 3+ = pipelined).
+                                            -- Higher values = faster batches, more server RAM.
+Customize.LatentRate        = 50000000      -- bytes/sec for capture upload (latent event throttle).
+                                            -- 50 MB/s lets the pipeline breathe; lower if you see lag spikes.
 
 -- Chroma Key Screen
 Customize.ChromaKeyColor    = 'magenta'          -- 'green' | 'magenta'

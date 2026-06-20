@@ -3,7 +3,8 @@ local isBrowsing        = false
 local isPaused          = false
 local isCancelled       = false
 local isPreview         = false
-local serverCaptureDone = false
+local pendingCaptures   = 0
+local pipelineDepth     = type(Customize.PipelineDepth) == 'number' and Customize.PipelineDepth or 3
 local captureCamera     = nil
 local captureGender     = 'male'
 local captureRotOffset  = 0.0
@@ -460,8 +461,8 @@ local function CaptureAndUpload(filename)
         return
     end
 
-    serverCaptureDone = false
-    TriggerLatentServerEvent('uz_autoshot:server:processCapture', Customize.LatentRate or 8000000, {
+    pendingCaptures = pendingCaptures + 1
+    TriggerLatentServerEvent('uz_autoshot:server:processCapture', Customize.LatentRate or 50000000, {
         filename    = filename,
         format      = Customize.ScreenshotFormat or 'png',
         transparent = Customize.TransparentBg and true or false,
@@ -471,13 +472,20 @@ local function CaptureAndUpload(filename)
         imageData   = base64,
     })
 
-    local serverTimeout = GetGameTimer() + 30000
-    while not serverCaptureDone and GetGameTimer() < serverTimeout and not isCancelled do
+    -- Block only if the pipeline is full (sliding window)
+    local serverTimeout = GetGameTimer() + 60000
+    while pendingCaptures >= pipelineDepth and GetGameTimer() < serverTimeout and not isCancelled do
         Wait(50)
     end
+end
 
-    if not serverCaptureDone and not isCancelled then
-        print('^3[uz_AutoShot]^0 Server did not acknowledge ' .. filename)
+local function DrainPipeline()
+    local timeout = GetGameTimer() + 120000
+    while pendingCaptures > 0 and GetGameTimer() < timeout do
+        Wait(100)
+    end
+    if pendingCaptures > 0 then
+        print('^3[uz_AutoShot]^0 Pipeline drain timeout, ' .. pendingCaptures .. ' captures may be lost')
     end
 end
 
@@ -1182,6 +1190,7 @@ local function RecaptureSpecificItems(items)
     end
 
     local wasCancelled = isCancelled
+    if not wasCancelled then DrainPipeline() end
     CleanupCapture()
     SendNUIMessage({ type = 'forceClose' })
     SendNUIMessage({ type = wasCancelled and 'captureCancelled' or 'captureComplete' })
@@ -1335,6 +1344,7 @@ local function RunCapture(selectedComponents, selectedProps, selectedVehicles, s
     end
 
     local wasCancelled = isCancelled
+    if not wasCancelled then DrainPipeline() end
     CleanupCapture()
     SendNUIMessage({ type = wasCancelled and 'captureCancelled' or 'captureComplete' })
 end
@@ -2057,6 +2067,7 @@ RegisterNUICallback('confirmSingleCapture', function(data, cb)
         CaptureAndUpload(folder .. '/' .. model)
 
         SendProgress(1, 1, model)
+        DrainPipeline()
         CleanupCapture()
         SendNUIMessage({ type = 'captureComplete' })
     end)
@@ -2072,7 +2083,7 @@ end)
 -- ════════════════════════════════════════════════════════
 
 RegisterNetEvent('uz_autoshot:client:captureProcessed', function(filename)
-    serverCaptureDone = true
+    pendingCaptures = math.max(0, pendingCaptures - 1)
 end)
 
 -- ════════════════════════════════════════════════════════

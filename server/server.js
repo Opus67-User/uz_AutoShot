@@ -240,7 +240,7 @@ function resizePNG(pngBuffer, targetW, targetH) {
 
 const MAX_PAYLOAD_BYTES = 20 * 1024 * 1024;
 
-onNet('uz_autoshot:server:processCapture', (payload) => {
+onNet('uz_autoshot:server:processCapture', async (payload) => {
     const src = source;
     if (!checkAce(src)) {
         console.log('^1[uz_AutoShot]^0 Refused capture: player ' + src + ' lacks ' + ACE_NAME);
@@ -316,8 +316,8 @@ onNet('uz_autoshot:server:processCapture', (payload) => {
         }
 
         const dir = path.dirname(outputPath);
-        if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
-        fs.writeFileSync(outputPath, outputData);
+        await fs.promises.mkdir(dir, { recursive: true }).catch(() => {});
+        await fs.promises.writeFile(outputPath, outputData);
 
         const sizeKB = Math.round(outputData.length / 1024);
         const label = wantTransp ? 'bg removed' : ext;
