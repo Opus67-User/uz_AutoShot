@@ -3,6 +3,7 @@ local isBrowsing        = false
 local isPaused          = false
 local isCancelled       = false
 local isPreview         = false
+local serverCaptureDone = false
 local captureCamera     = nil
 local captureGender     = 'male'
 local captureRotOffset  = 0.0
@@ -459,6 +460,7 @@ local function CaptureAndUpload(filename)
         return
     end
 
+    serverCaptureDone = false
     TriggerLatentServerEvent('uz_autoshot:server:processCapture', Customize.LatentRate or 8000000, {
         filename    = filename,
         format      = Customize.ScreenshotFormat or 'png',
@@ -468,6 +470,15 @@ local function CaptureAndUpload(filename)
         height      = Customize.ScreenshotHeight or 0,
         imageData   = base64,
     })
+
+    local serverTimeout = GetGameTimer() + 30000
+    while not serverCaptureDone and GetGameTimer() < serverTimeout and not isCancelled do
+        Wait(50)
+    end
+
+    if not serverCaptureDone and not isCancelled then
+        print('^3[uz_AutoShot]^0 Server did not acknowledge ' .. filename)
+    end
 end
 
 local function SendProgress(current, total, category)
@@ -2054,6 +2065,14 @@ end)
 RegisterNUICallback('cancelSingleCapture', function(_, cb)
     CancelPreview()
     cb('ok')
+end)
+
+-- ════════════════════════════════════════════════════════
+-- SERVER CAPTURE ACKNOWLEDGMENT
+-- ════════════════════════════════════════════════════════
+
+RegisterNetEvent('uz_autoshot:client:captureProcessed', function(filename)
+    serverCaptureDone = true
 end)
 
 -- ════════════════════════════════════════════════════════

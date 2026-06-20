@@ -256,16 +256,23 @@ onNet('uz_autoshot:server:processCapture', (payload) => {
     const wantHeight = parseInt(payload.height) || 0;
     const imageData  = payload.imageData;
 
+    const notifyClient = () => {
+        if (xFilename) emitNet('uz_autoshot:client:captureProcessed', src, xFilename);
+    };
+
     if (!xFilename || /[\\/]\.\.(?:[\\/]|$)/.test(xFilename) || path.isAbsolute(xFilename)) {
         console.log('^1[uz_AutoShot]^0 Refused capture: invalid filename: ' + xFilename);
+        notifyClient();
         return;
     }
     if (typeof imageData !== 'string' || imageData.length === 0) {
         console.log('^1[uz_AutoShot]^0 Refused capture: empty image data for ' + xFilename);
+        notifyClient();
         return;
     }
     if (imageData.length > Math.ceil(MAX_PAYLOAD_BYTES * 4 / 3) + 64) {
         console.log('^1[uz_AutoShot]^0 Refused capture: payload too large for ' + xFilename);
+        notifyClient();
         return;
     }
 
@@ -273,6 +280,7 @@ onNet('uz_autoshot:server:processCapture', (payload) => {
         let outputData = Buffer.from(stripDataUri(imageData), 'base64');
         if (!outputData || outputData.length === 0) {
             console.log('^1[uz_AutoShot]^0 Refused capture: invalid base64 for ' + xFilename);
+            notifyClient();
             return;
         }
 
@@ -303,6 +311,7 @@ onNet('uz_autoshot:server:processCapture', (payload) => {
         const outputPath = path.resolve(path.join(OUTPUT_DIR, xFilename + '.' + ext));
         if (!outputPath.startsWith(OUTPUT_DIR + path.sep)) {
             console.log('^1[uz_AutoShot]^0 Refused capture: path traversal blocked for ' + xFilename);
+            notifyClient();
             return;
         }
 
@@ -316,6 +325,8 @@ onNet('uz_autoshot:server:processCapture', (payload) => {
     } catch (err) {
         console.log('^1[uz_AutoShot]^0 Process error: ' + (err && err.message ? err.message : err));
     }
+
+    notifyClient();
 });
 
 onNet('uz_autoshot:server:setBucket', (bucket) => {
