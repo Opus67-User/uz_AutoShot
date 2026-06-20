@@ -26,8 +26,8 @@ Customize.BatchPauseWait    = 2000          -- ms
 Customize.GCInterval        = 20
 Customize.PipelineDepth     = 3             -- max in-flight captures (1 = wait for each, 3+ = pipelined).
                                             -- Higher values = faster batches, more server RAM.
-Customize.LatentRate        = 50000000      -- bytes/sec for capture upload (latent event throttle).
-                                            -- 50 MB/s lets the pipeline breathe; lower if you see lag spikes.
+Customize.LatentRate        = 20000000      -- bytes/sec for capture upload (latent event throttle).
+                                            -- 20 MB/s balances speed and stability; raise if pipeline starves.
 
 -- Chroma Key Screen
 Customize.ChromaKeyColor    = 'magenta'          -- 'green' | 'magenta'

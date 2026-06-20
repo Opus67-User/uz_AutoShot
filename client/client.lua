@@ -462,7 +462,7 @@ local function CaptureAndUpload(filename)
     end
 
     pendingCaptures = pendingCaptures + 1
-    TriggerLatentServerEvent('uz_autoshot:server:processCapture', Customize.LatentRate or 50000000, {
+    TriggerLatentServerEvent('uz_autoshot:server:processCapture', Customize.LatentRate or 20000000, {
         filename    = filename,
         format      = Customize.ScreenshotFormat or 'png',
         transparent = Customize.TransparentBg and true or false,
@@ -480,11 +480,11 @@ local function CaptureAndUpload(filename)
 end
 
 local function DrainPipeline()
-    local timeout = GetGameTimer() + 120000
-    while pendingCaptures > 0 and GetGameTimer() < timeout do
+    local timeout = GetGameTimer() + 30000
+    while pendingCaptures > 0 and GetGameTimer() < timeout and not isCancelled do
         Wait(100)
     end
-    if pendingCaptures > 0 then
+    if pendingCaptures > 0 and not isCancelled then
         print('^3[uz_AutoShot]^0 Pipeline drain timeout, ' .. pendingCaptures .. ' captures may be lost')
     end
 end
