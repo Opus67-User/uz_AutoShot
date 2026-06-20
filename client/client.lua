@@ -155,12 +155,12 @@ local function CreateCaptureCamera(entity, preset, presetName)
         lookZ = pedPos.z + preset.zPos
         roll  = orbitRoll or preset.defaultRoll or 0.0
     else
-        -- Legacy preset without defaultAngleH: rotate ped to align with
-        -- camera, then place camera behind ped's forward vector.
+        -- Legacy preset without defaultAngleH: rotate entity to align with
+        -- camera, then place camera behind entity's forward vector.
         local rotZ = preset.rotation.z + captureRotOffset
-        SetEntityRotation(ped, preset.rotation.x, preset.rotation.y, rotZ, 2, false)
+        SetEntityRotation(entity, preset.rotation.x, preset.rotation.y, rotZ, 2, false)
         Wait(50)
-        local fwd = GetEntityForwardVector(ped)
+        local fwd = GetEntityForwardVector(entity)
         local dist = preset.dist or 1.2
         camX  = pedPos.x - fwd.x * dist
         camY  = pedPos.y - fwd.y * dist
@@ -218,7 +218,7 @@ local function DrawGreenScreenAndLights(entity)
         gs     = Customize.GreenScreen
         lights = Customize.StudioLights
     end
-    local r, g, b = Customize.GreenScreen.color.r, Customize.GreenScreen.color.g, Customize.GreenScreen.color.b
+    local r, g, b = gs.color.r, gs.color.g, gs.color.b
 
     local hw = gs.width  * 0.5
     local hd = gs.depth  * 0.5

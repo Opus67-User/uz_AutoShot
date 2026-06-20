@@ -280,7 +280,6 @@ onNet('uz_autoshot:server:processCapture', async (payload) => {
         let outputData = Buffer.from(stripDataUri(imageData), 'base64');
         if (!outputData || outputData.length === 0) {
             console.log('^1[uz_AutoShot]^0 Refused capture: invalid base64 for ' + xFilename);
-            notifyClient();
             return;
         }
 
@@ -311,7 +310,6 @@ onNet('uz_autoshot:server:processCapture', async (payload) => {
         const outputPath = path.resolve(path.join(OUTPUT_DIR, xFilename + '.' + ext));
         if (!outputPath.startsWith(OUTPUT_DIR + path.sep)) {
             console.log('^1[uz_AutoShot]^0 Refused capture: path traversal blocked for ' + xFilename);
-            notifyClient();
             return;
         }
 
@@ -324,9 +322,9 @@ onNet('uz_autoshot:server:processCapture', async (payload) => {
         console.log('^2[uz_AutoShot]^0 Saved: ' + xFilename + '.' + ext + ' (' + sizeKB + ' KB, ' + label + ')');
     } catch (err) {
         console.log('^1[uz_AutoShot]^0 Process error: ' + (err && err.message ? err.message : err));
+    } finally {
+        notifyClient();
     }
-
-    notifyClient();
 });
 
 onNet('uz_autoshot:server:setBucket', (bucket) => {
